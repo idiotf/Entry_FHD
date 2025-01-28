@@ -1,0 +1,1 @@
+(()=>{"use strict";const t=t=>chrome.scripting.executeScript({target:{tabId:t},files:["content.js"],world:"MAIN"});chrome.tabs.onCreated.addListener((({id:e})=>e&&t(e).catch((()=>{})))),chrome.tabs.onUpdated.addListener((e=>t(e).catch((()=>{}))))})();

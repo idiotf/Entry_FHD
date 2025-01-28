@@ -1,0 +1,27 @@
+{
+  "name": "entry-fhd",
+  "version": "1.0.0",
+  "description": "엔트리 화질을 올려주는 확장 프로그램",
+  "homepage": "https://github.com/idiotf/EntryScreenFixer#readme",
+  "bugs": {
+    "url": "https://github.com/idiotf/EntryScreenFixer/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/idiotf/EntryScreenFixer.git"
+  },
+  "license": "ISC",
+  "author": "aqu3180",
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "webpack"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.299",
+    "ts-loader": "^9.5.2",
+    "typescript": "^5.7.3",
+    "webpack": "^5.97.1",
+    "webpack-cli": "^6.0.1"
+  }
+}
