@@ -31,19 +31,16 @@ interface Stage {
   isObjectClick: boolean
   inputField: InputField | null
   canvas: {
+    update?(): void
+    children: StageObject[]
     x: number
     y: number
+    scaleX: number
+    scaleY: number
     canvas: HTMLCanvasElement
   }
   _app: {
     render?(): void
-    stage: {
-      update?(): void
-      x: number
-      y: number
-      scaleX: number
-      scaleY: number
-    }
     screen?: Resizable
     renderer?: {
       resize(width: number, height: number): void
@@ -110,6 +107,8 @@ interface StageObject {
   x: number
   y: number
   cursor: string
+  children: StageObject[]
+  resolution?: number
   parent: {
     x: number
     y: number
@@ -151,15 +150,18 @@ s.r = s.r || r(async function frame() {
 
   const canvas = stage.canvas.canvas
   const width = Math.round(canvas.offsetWidth * devicePixelRatio), height = Math.round(width * 9 / 16)
-  // if (typeof firstWidth == 'undefined') firstWidth = width
-  // if (typeof firstHeight == 'undefined') firstHeight = height
+
+  if (Entry.options.useWebGL) for (const text of stage.canvas.children.map(function findTree(v): StageObject[] { return [...v.children.map(findTree), v].flat() }).flat().filter(v => v.resolution)) {
+    text.resolution = width / 640
+  }
+
   if (canvas.width != width || canvas.height != height) {
     canvas.width = width
     canvas.height = height
-    stage._app.stage.x = width / 2
-    stage._app.stage.y = height / 2
-    stage._app.stage.scaleX = width / 480
-    stage._app.stage.scaleY = height / 270
+    stage.canvas.x = width / 2
+    stage.canvas.y = height / 2
+    stage.canvas.scaleX = width / 480
+    stage.canvas.scaleY = height / 270
 
     if (stage._app.screen && stage._app.renderer) {
       stage._app.screen.width = width
@@ -170,7 +172,7 @@ s.r = s.r || r(async function frame() {
     }
 
     stage._app.render?.()
-    stage._app.stage.update?.()
+    stage.canvas.update?.()
   }
 
   const inputField = stage.inputField
@@ -187,7 +189,7 @@ s.r = s.r || r(async function frame() {
     if (Entry.options.useWebGL) {
       const view = inputField.getPixiView()
       view.scale.set(480 / width, 270 / height)
-      view.position.set((inputField._x - stage._app.stage.x) / stage._app.stage.scaleX, (inputField._y - stage._app.stage.y) / stage._app.stage.scaleY)
+      view.position.set((inputField._x - stage.canvas.x) / stage.canvas.scaleX, (inputField._y - stage.canvas.y) / stage.canvas.scaleY)
     }
     Entry.requestUpdate = true
     stage.update()
@@ -205,8 +207,8 @@ s.r = s.r || r(async function frame() {
       stage.isObjectClick = true
       if (Entry.type != 'minimize' && stage.isEntitySelectable()) {
         object.offset = {
-          x: -object.parent.x + object.entity.x - ((stageX - stage._app.stage.x) / stage._app.stage.scaleX),
-          y: -object.parent.y - object.entity.y - ((stageY - stage._app.stage.y) / stage._app.stage.scaleY),
+          x: -object.parent.x + object.entity.x - ((stageX - stage.canvas.x) / stage.canvas.scaleX),
+          y: -object.parent.y - object.entity.y - ((stageY - stage.canvas.y) / stage.canvas.scaleY),
         }
         object.cursor = 'move'
         object.entity.initCommand()
@@ -218,15 +220,15 @@ s.r = s.r || r(async function frame() {
       const { entity } = object
       if (entity.parent.getLock()) return
       if (object.offset) {
-        entity.setX((stageX - stage._app.stage.x) / stage._app.stage.scaleX + object.offset.x)
-        entity.setY((stage._app.stage.y - stageY) / stage._app.stage.scaleY - object.offset.y)
+        entity.setX((stageX - stage.canvas.x) / stage.canvas.scaleX + object.offset.x)
+        entity.setY((stage.canvas.y - stageY) / stage.canvas.scaleY - object.offset.y)
       }
       stage.updateObject()
     })
   }
   stage.handle.getEventCoordinate = ({ stageX, stageY }) => ({
-    x: (stageX - stage._app.stage.x) / stage._app.stage.scaleX,
-    y: (stageY - stage._app.stage.y) / stage._app.stage.scaleY,
+    x: (stageX - stage.canvas.x) / stage.canvas.scaleX,
+    y: (stageY - stage.canvas.y) / stage.canvas.scaleY,
   })
   for (const variable of stage.variableContainer.children) {
     const { _listeners } = variable
@@ -236,13 +238,13 @@ s.r = s.r || r(async function frame() {
     _listeners._viewportPatched = []
     variable.on('mousedown', ({ stageX, stageY }) => Entry.type == 'workspace' && (
       variable.offset = {
-        x: variable.x - (stageX - stage._app.stage.x) / stage._app.stage.scaleX,
-        y: variable.y - (stageY - stage._app.stage.y) / stage._app.stage.scaleY,
+        x: variable.x - (stageX - stage.canvas.x) / stage.canvas.scaleX,
+        y: variable.y - (stageY - stage.canvas.y) / stage.canvas.scaleY,
       }
     ))
     variable.on('pressmove', ({ stageX, stageY }) => Entry.type == 'workspace' && (
-      variable.variable.setX((stageX - stage._app.stage.x) / stage._app.stage.scaleX + variable.offset.x),
-      variable.variable.setY((stageY - stage._app.stage.y) / stage._app.stage.scaleY + variable.offset.y),
+      variable.variable.setX((stageX - stage.canvas.x) / stage.canvas.scaleX + variable.offset.x),
+      variable.variable.setY((stageY - stage.canvas.y) / stage.canvas.scaleY + variable.offset.y),
       variable.variable.updateView()
     ))
   }
