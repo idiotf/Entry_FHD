@@ -4,12 +4,12 @@ const { Configuration } = require('webpack')
 /** @type { Configuration } */
 module.exports = {
   mode: 'production',
-  entry: './src/content.ts',
+  entry: './src/index.ts',
   resolve: {
     extensions: ['.js', '.ts'],
   },
   output: {
-    filename: 'content.js',
+    filename: 'index.js',
     path: path.resolve(__dirname, 'build/dist'),
   },
   module: {

@@ -11,7 +11,7 @@
   },
   "content_scripts": [{
     "matches": ["https://playentry.org/*", "https://ncc.playentry.org/*"],
-    "js": ["dist/content.js"],
+    "js": ["dist/index.js"],
     "world": "MAIN"
   }]
 }
