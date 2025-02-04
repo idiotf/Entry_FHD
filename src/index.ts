@@ -136,10 +136,14 @@ interface StageObject {
     y: number
   }
   on(event: string, handler: (event: StageEvent) => void): void
+  removeAllListeners?(event: string): void
+  removeAllEventListeners?(event: string): void
   entity: Entity
   _viewportPatched?: number
-  _listeners?: {
-    [k: string]: Function[]
+  _events?: {
+    [k: string]: {
+      fn(event: StageEvent): void
+    }
   }
 }
 
@@ -167,11 +171,12 @@ s.r = s.r || r(async function frame() {
   const stage = Entry?.stage
   if (!stage) return
 
+  const { type, engine, options: { useWebGL } } = Entry
   const { canvas } = stage
   const canvasElement = canvas.canvas
   const width = Math.round(canvasElement.offsetWidth * devicePixelRatio), height = Math.round(width * 9 / 16)
 
-  if (Entry.options.useWebGL) for (const text of canvas.children.flatMap(function findTree(v): StageObject[] { return [v, ...v.children.flatMap(findTree)] }).filter(v => v.resolution)) text.resolution = width / 640
+  if (useWebGL) for (const text of canvas.children.flatMap(function findTree(v): StageObject[] { return [v, ...v.children.flatMap(findTree)] }).filter(v => v.resolution)) text.resolution = width / 640
 
   if (canvasElement.width != width || canvasElement.height != height) {
     canvasElement.width = width
@@ -205,7 +210,7 @@ s.r = s.r || r(async function frame() {
     inputField.borderRadius(width / 64)
     inputField.fontSize(width / 32)
 
-    if (Entry.options.useWebGL) {
+    if (useWebGL) {
       const view = inputField.getPixiView()
       view.scale.set(480 / width, 270 / height)
       view.position.set((inputField._x - canvas.x) / canvas.scaleX, (inputField._y - canvas.y) / canvas.scaleY)
@@ -216,12 +221,13 @@ s.r = s.r || r(async function frame() {
   }
 
   Entry.container.objects_.forEach(({ entity: { object } }, i) => {
-    const { _listeners } = object
-    if (!_listeners || object._viewportPatched) return
+    if (object._viewportPatched == i) return
     object._viewportPatched = i
-    _listeners.mousedown = []
-    _listeners.pressmove = []
-    object.on('mousedown', ({ stageX, stageY }) => {
+    object.removeAllListeners?.('__pointermove')
+    object.removeAllListeners?.('__pointerup')
+    object.removeAllEventListeners?.('mousedown')
+    object.removeAllEventListeners?.('pressmove')
+    object.on(useWebGL ? '__pointermove' : 'mousedown', ({ stageX, stageY }) => {
       Entry.dispatchEvent('entityClick', object.entity)
       stage.isObjectClick = true
       if (Entry.type != 'minimize' && stage.isEntitySelectable()) {
@@ -234,7 +240,7 @@ s.r = s.r || r(async function frame() {
         Entry.container.selectObject(object.entity.parent.id)
       }
     })
-    object.on('pressmove', ({ stageX, stageY }) => {
+    object.on(useWebGL ? '__pointerup' : 'pressmove', ({ stageX, stageY }) => {
       if (!stage.isEntitySelectable()) return
       const { entity } = object
       if (entity.parent.getLock()) return
@@ -247,32 +253,38 @@ s.r = s.r || r(async function frame() {
   })
   const variables = stage.variableContainer.children
   variables.forEach((variable, i) => {
-    const { _listeners, variable: variableObj } = variable, { slideBar_, valueSetter_, resizeHandle_, scrollButton_ } = variableObj, { type, engine } = Entry
+    const { variable: variableObj } = variable
+    const { slideBar_, valueSetter_, resizeHandle_, scrollButton_ } = variableObj
     if (slideBar_) do {
-      const { _listeners } = slideBar_
-      if (!_listeners || slideBar_._viewportPatched == i) break
-      _listeners.mousedown = []
-      slideBar_.on('mousedown', ({ stageX }) => engine.isState('run') && variableObj.setSlideCommandX(stageX / canvas.scaleX - variableObj.getX() - canvas.x / canvas.scaleX))
+      if (slideBar_._viewportPatched == i) break
+      slideBar_._viewportPatched = i
+      slideBar_.removeAllListeners?.('__pointermove')
+      slideBar_.removeAllEventListeners?.('mousedown')
+      slideBar_.on(useWebGL ? '__pointermove' : 'mousedown', ({ stageX }) => engine.isState('run') && variableObj.setSlideCommandX(stageX / canvas.scaleX - variableObj.getX() - canvas.x / canvas.scaleX))
     } while (false)
 
     if (valueSetter_) do {
-      const { _listeners } = valueSetter_
-      if (!_listeners || valueSetter_._viewportPatched == i) break
-      _listeners.mousedown = []
-      _listeners.pressmove = []
-      valueSetter_.on('mousedown', ({ stageX }) => engine.isState('run') && (
+      if (valueSetter_._viewportPatched == i) break
+      valueSetter_._viewportPatched = i
+      valueSetter_.removeAllListeners?.('__pointermove')
+      valueSetter_.removeAllListeners?.('__pointerup')
+      valueSetter_.removeAllEventListeners?.('mousedown')
+      valueSetter_.removeAllEventListeners?.('pressmove')
+      valueSetter_.on(useWebGL ? '__pointermove' : 'mousedown', ({ stageX }) => engine.isState('run') && (
         variableObj.isAdjusting = true,
         valueSetter_.offsetX = stageX / canvas.scaleX - valueSetter_.x
       ))
-      valueSetter_.on('pressmove', ({ stageX }) => engine.isState('run') && variableObj.setSlideCommandX(stageX / canvas.scaleX - valueSetter_.offsetX + 5))
+      valueSetter_.on(useWebGL ? '__pointerup' : 'pressmove', ({ stageX }) => engine.isState('run') && variableObj.setSlideCommandX(stageX / canvas.scaleX - valueSetter_.offsetX + 5))
     } while (false)
 
     if (resizeHandle_) do {
-      const { _listeners } = resizeHandle_
-      if (!_listeners || resizeHandle_._viewportPatched == i) break
-      _listeners.mousedown = []
-      _listeners.pressmove = []
-      resizeHandle_.on('mousedown', ({ stageX, stageY }) => {
+      if (resizeHandle_._viewportPatched == i) break
+      resizeHandle_._viewportPatched = i
+      resizeHandle_.removeAllListeners?.('__pointermove')
+      resizeHandle_.removeAllListeners?.('__pointerup')
+      resizeHandle_.removeAllEventListeners?.('mousedown')
+      resizeHandle_.removeAllEventListeners?.('pressmove')
+      resizeHandle_.on(useWebGL ? '__pointermove' : 'mousedown', ({ stageX, stageY }) => {
         variableObj.isResizing = !0,
         resizeHandle_.offset = {
           x: stageX / canvas.scaleX - variableObj.getWidth(),
@@ -280,7 +292,7 @@ s.r = s.r || r(async function frame() {
         },
         resizeHandle_.parent.cursor = 'nwse-resize'
       })
-      resizeHandle_.on('pressmove', ({ stageX, stageY }) => {
+      resizeHandle_.on(useWebGL ? '__pointerup' : 'pressmove', ({ stageX, stageY }) => {
         variableObj.setWidth(stageX / canvas.scaleX - resizeHandle_.offset.x),
         variableObj.setHeight(stageY / canvas.scaleY - resizeHandle_.offset.y),
         variableObj.updateView()
@@ -288,15 +300,17 @@ s.r = s.r || r(async function frame() {
     } while (false)
 
     if (scrollButton_) do {
-      const { _listeners } = scrollButton_
-      if (!_listeners || scrollButton_._viewportPatched == i) break
-      _listeners.mousedown = []
-      _listeners.pressmove = []
-      scrollButton_.on('mousedown', ({ stageY }) => {
+      if (scrollButton_._viewportPatched == i) break
+      scrollButton_._viewportPatched = i
+      scrollButton_.removeAllListeners?.('__pointermove')
+      scrollButton_.removeAllListeners?.('__pointerup')
+      scrollButton_.removeAllEventListeners?.('mousedown')
+      scrollButton_.removeAllEventListeners?.('pressmove')
+      scrollButton_.on(useWebGL ? '__pointermove' : 'mousedown', ({ stageY }) => {
         variableObj.isResizing = !0
         scrollButton_.offsetY = stageY - scrollButton_.y * canvas.scaleY
       })
-      scrollButton_.on('pressmove', ({ stageY }) => {
+      scrollButton_.on(useWebGL ? '__pointerup' : 'pressmove', ({ stageY }) => {
         const t = Math.max(25, Math.min(variableObj.getHeight() - 30, (stageY - scrollButton_.offsetY) / canvas.scaleY))
         scrollButton_.y = t
         variableObj.updateView()
@@ -304,17 +318,19 @@ s.r = s.r || r(async function frame() {
     } while (false)
 
     do {
-      if (!_listeners || variable._viewportPatched == i) break
+      if (variable._viewportPatched == i) break
       variable._viewportPatched = i
-      _listeners.mousedown = []
-      _listeners.pressmove = []
-      variable.on('mousedown', ({ stageX, stageY }) => type == 'workspace' && (
+      variable.removeAllListeners?.('__pointermove')
+      variable.removeAllListeners?.('__pointerup')
+      variable.removeAllEventListeners?.('mousedown')
+      variable.removeAllEventListeners?.('pressmove')
+      variable.on(useWebGL ? '__pointermove' : 'mousedown', ({ stageX, stageY }) => type == 'workspace' && (
         variable.offset = {
           x: variable.x - (stageX - canvas.x) / canvas.scaleX,
           y: variable.y - (stageY - canvas.y) / canvas.scaleY,
         }
       ))
-      variable.on('pressmove', ({ stageX, stageY }) => type != 'workspace' || variableObj.isResizing || variableObj.isAdjusting || (
+      variable.on(useWebGL ? '__pointerup' : 'pressmove', ({ stageX, stageY }) => type != 'workspace' || variableObj.isResizing || variableObj.isAdjusting || (
         variableObj.setX((stageX - canvas.x) / canvas.scaleX + variable.offset.x),
         variableObj.setY((stageY - canvas.y) / canvas.scaleY + variable.offset.y),
         variableObj.updateView()
