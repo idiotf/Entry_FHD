@@ -1,5 +1,5 @@
 declare global {
-  var r: number | undefined
+  var __REQUEST_ANIMATION_FRAME_ID: number | undefined
 }
 
 interface EntryGlobal {
@@ -161,8 +161,8 @@ interface Handle {
 }
 
 const s = self, r = requestAnimationFrame
-s.r = s.r || r(async function frame() {
-  s.r = r(frame)
+s.__REQUEST_ANIMATION_FRAME_ID = s.__REQUEST_ANIMATION_FRAME_ID || r(async function frame() {
+  s.__REQUEST_ANIMATION_FRAME_ID = r(frame)
 
   const global = ((document.querySelector('iframe.eaizycc0') as HTMLIFrameElement | null)?.contentWindow || self) as {
     Entry?: EntryGlobal

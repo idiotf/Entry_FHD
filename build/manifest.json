@@ -1,7 +1,7 @@
 {
   "name": "Entry FHD",
   "description": "엔트리 화질을 올려주는 확장 프로그램입니다.",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "manifest_version": 3,
   "icons": {
     "16": "icons/16.png",
@@ -10,8 +10,13 @@
     "128": "icons/128.png"
   },
   "content_scripts": [{
-    "matches": ["https://playentry.org/*", "https://ncc.playentry.org/*"],
+    "matches": ["https://playentry.org/*"],
     "js": ["dist/index.js"],
     "world": "MAIN"
-  }]
+  }],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "{4a0d8461-1421-4718-8e04-a3dc27bc0149}"
+    }
+  }
 }
