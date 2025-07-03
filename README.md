@@ -1,4 +1,4 @@
-# EntryScreenFixer
+# Entry FHD
 엔트리 화질을 올려주는 확장 프로그램입니다.
 ## 변경 사항
 - 0.0.3 - 버그 수정
