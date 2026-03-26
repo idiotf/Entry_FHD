@@ -164,7 +164,7 @@ const s = self, r = requestAnimationFrame
 s.__REQUEST_ANIMATION_FRAME_ID = s.__REQUEST_ANIMATION_FRAME_ID || r(async function frame() {
   s.__REQUEST_ANIMATION_FRAME_ID = r(frame)
 
-  const global = ((document.querySelector('iframe.eaizycc0') as HTMLIFrameElement | null)?.contentWindow || self) as {
+  const global = ((document.querySelector('iframe.eaizycc0,iframe.eh3vyy30') as HTMLIFrameElement | null)?.contentWindow || self) as {
     Entry?: EntryGlobal
   }
   const Entry = await new Promise<EntryGlobal | undefined>(resolve => resolve(global.Entry)).catch(() => {})
